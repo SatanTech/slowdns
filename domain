@@ -1,5 +1,15 @@
 #!/bin/bash
 
+sudo rm -rf /etc/xray
+sudo rm -rf /etc/v2ray
+sudo rm -rf /etc/nsdomain
+sudo rm -rf /etc/per
+
+# Membuat direktori yang diperlukan
+sudo mkdir -p /etc/xray
+sudo mkdir -p /etc/v2ray
+sudo mkdir -p /etc/nsdomain
+
 # Install dependencies
 apt-get install -y jq curl
 
@@ -45,16 +55,6 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
   --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}")
 
 echo "DNS update completed for ${dnss} with IP ${IP}"
-
-sudo rm -rf /etc/xray
-sudo rm -rf /etc/v2ray
-sudo rm -rf /etc/nsdomain
-sudo rm -rf /etc/per
-
-# Membuat direktori yang diperlukan
-sudo mkdir -p /etc/xray
-sudo mkdir -p /etc/v2ray
-sudo mkdir -p /etc/nsdomain
 
 # Membuat file yang diperlukan
 sudo touch /etc/xray/domain
