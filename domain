@@ -18,7 +18,7 @@ DOMAIN="tepllovpn.eu.org"
 sub="BT-$(< /dev/urandom tr -dc 'A-Za-z' | head -c 8)"
 dnss="${sub}.tepllovpn.eu.org"
 CF_ID="bangtepllo752@gmail.com"
-CF_KEY="d8e5c652e1ddcc6fbfb20b1d7b6364de70c82"
+CF_KEY="5d024f8cb7a4dd528e96f1aa14a2357e"
 IP=$(wget -qO- icanhazip.com)
 
 # Error handling
