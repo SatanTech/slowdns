@@ -1,0 +1,46 @@
+
+# Install dependencies
+apt-get install -y jq curl
+
+# Set variables
+DOMAIN="tepllovpn.eu.org"
+sub="BT-$(< /dev/urandom tr -dc 'A-Za-z' | head -c 8)"
+dnss="${sub}.tepllovpn.eu.org"
+CF_ID="bangtepllo752@gmail.com"
+CF_KEY="d8e5c652e1ddcc6fbfb20b1d7b6364de70c82"
+IP=$(wget -qO- icanhazip.com)
+
+# Error handling
+set -euo pipefail
+
+echo "Updating DNS for ${dnss}..."
+
+# Get Zone ID
+ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
+  -H "X-Auth-Email: ${CF_ID}" \
+  -H "X-Auth-Key: ${CF_KEY}" \
+  -H "Content-Type: application/json" | jq -r .result[0].id)
+
+# Get Record ID
+RECORD=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?name=${dnss}" \
+  -H "X-Auth-Email: ${CF_ID}" \
+  -H "X-Auth-Key: ${CF_KEY}" \
+  -H "Content-Type: application/json" | jq -r .result[0].id)
+
+# Create new record if not found
+if [[ -z "$RECORD" ]]; then
+  RECORD=$(curl -sLX POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
+    -H "X-Auth-Email: ${CF_ID}" \
+    -H "X-Auth-Key: ${CF_KEY}" \
+    -H "Content-Type: application/json" \
+    --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}" | jq -r .result.id)
+fi
+
+# Update existing DNS record
+RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${RECORD}" \
+  -H "X-Auth-Email: ${CF_ID}" \
+  -H "X-Auth-Key: ${CF_KEY}" \
+  -H "Content-Type: application/json" \
+  --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}")
+
+echo "DNS update completed for ${dnss} with IP ${IP}"
