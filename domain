@@ -45,3 +45,29 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
   --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}")
 
 echo "DNS update completed for ${dnss} with IP ${IP}"
+
+sudo rm -rf /etc/xray
+sudo rm -rf /etc/v2ray
+sudo rm -rf /etc/nsdomain
+sudo rm -rf /etc/per
+
+# Membuat direktori yang diperlukan
+sudo mkdir -p /etc/xray
+sudo mkdir -p /etc/v2ray
+sudo mkdir -p /etc/nsdomain
+
+# Membuat file yang diperlukan
+sudo touch /etc/xray/domain
+sudo touch /etc/v2ray/domain
+sudo touch /etc/xray/slwdomain
+sudo touch /etc/v2ray/scdomain
+
+# Menulis domain ke file yang sesuai
+sudo echo "$dnss" > /root/domain
+sudo echo "$dnss" > /root/scdomain
+sudo echo "$dnss" > /etc/xray/scdomain
+sudo echo "$dnss" > /etc/v2ray/scdomain
+sudo echo "$dnss" > /etc/xray/domain
+sudo echo "$dnss" > /etc/v2ray/domain
+
+echo "IP=$dnss" > /var/lib/ipvps.conf
