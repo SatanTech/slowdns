@@ -10,53 +10,41 @@ sudo mkdir -p /etc/xray
 sudo mkdir -p /etc/v2ray
 sudo mkdir -p /etc/nsdomain
 
-# Install dependencies
-apt-get install -y jq curl
-
-# Set variables
-DOMAIN="tepllovpn.eu.org"
-sub="bt-$(< /dev/urandom tr -dc 'a-z' | head -c 8)"
-dnss="${sub}.tepllovpn.eu.org"
-CF_ID="bangtepllo752@gmail.com"
-CF_KEY="aefeaef07622fac408d5a975087a42b698a57"
-IP=$(wget -qO- icanhazip.com)
-
-# Error handling
+MYIP=$(wget -qO- icanhazip.com);
+apt install jq curl -y
+#read -p "Masukan Domain (contoh : Dragon)" domen
+DOMAIN=tepllovpn.eu.org
+sub="bt-$(</dev/urandom tr -dc a-z0-9 | head -c5)"
+dnss=${sub}.tepllovpn.eu.org
+CF_ID=bangtepllo752@gmail.com
+CF_KEY=aefeaef07622fac408d5a975087a42b698a57
 set -euo pipefail
-
+IP=$(wget -qO- icanhazip.com);
 echo "Updating DNS for ${dnss}..."
-
-# Get Zone ID
 ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
-  -H "X-Auth-Email: ${CF_ID}" \
-  -H "X-Auth-Key: ${CF_KEY}" \
-  -H "Content-Type: application/json" | jq -r .result[0].id)
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" | jq -r .result[0].id)
 
-# Get Record ID
 RECORD=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?name=${dnss}" \
-  -H "X-Auth-Email: ${CF_ID}" \
-  -H "X-Auth-Key: ${CF_KEY}" \
-  -H "Content-Type: application/json" | jq -r .result[0].id)
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" | jq -r .result[0].id)
 
-# Create new record if not found
-if [[ -z "$RECORD" ]]; then
-  RECORD=$(curl -sLX POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
-    -H "X-Auth-Email: ${CF_ID}" \
-    -H "X-Auth-Key: ${CF_KEY}" \
-    -H "Content-Type: application/json" \
-    --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}" | jq -r .result.id)
+if [[ "${#RECORD}" -le 10 ]]; then
+     RECORD=$(curl -sLX POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" \
+     --data '{"type":"A","name":"'${dnss}'","content":"'${IP}'","ttl":120,"proxied":false}' | jq -r .result.id)
 fi
 
-# Update existing DNS record
 RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${RECORD}" \
-  -H "X-Auth-Email: ${CF_ID}" \
-  -H "X-Auth-Key: ${CF_KEY}" \
-  -H "Content-Type: application/json" \
-  --data "{\"type\":\"A\",\"name\":\"${dnss}\",\"content\":\"${IP}\",\"ttl\":120,\"proxied\":false}")
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" \
+     --data '{"type":"A","name":"'${dnss}'","content":"'${IP}'","ttl":120,"proxied":false}')
 
-echo "DNS update completed for ${dnss} with IP ${IP}"
-
-# Membuat file yang diperlukan
 sudo touch /etc/xray/domain
 sudo touch /etc/v2ray/domain
 sudo touch /etc/xray/slwdomain
